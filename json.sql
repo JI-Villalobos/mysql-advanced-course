@@ -40,3 +40,34 @@ update products set data = JSON_REPLACE(data, '$.brand', 'apple') where product_
 --JSON_CONTAINS_PATH: check if a JSON document contains a specific path
 --JSON_TYPE: get the type of a value in a JSON document
 --...etc.
+
+
+--before search and manipulate json data we´ll generate data on products table
+update products set data = '{"brand": "apple","hdsize": "40gb", "warranty": false}' where random() < 0.4;
+
+--find all touples with brand pear
+select * from products 
+where JSON_EXTRACT(data, '$.brand') = 'pear'
+limit 10;
+
+--whe can get data from a JSON column extracting the value a s mysql string pr my sql number
+--usefull if we need operate with the data
+-- select data ->>'$.brand', .....rest of the query
+--or data->>'$.brand.founder' or data->>'$.brand'->>'$.founder'(for older versions)  if the values has another json object inside
+update products set data = '{"brand": {"founder": "S.P William", "year": 1950},"hdsize": "40gb", "warranty": false}' where product_id = 10;
+
+select data->>'$.brand.founder' as founder, JSON_EXTRACT(data, '$.hdsize') from products 
+where product_id = 12
+limit 10;
+
+--we can index a JSON column to speed up queries
+--but we can create a virtual column that extracts a value from the JSON document and index that column
+alter table products add column json_brand varchar(30) as (data->>'$.brand');
+
+--in many scenarios we can´t have a table with null values
+--an aproach is to use a default value for the virtual column taht we use to index the json data
+alter table products add column json_brand varchar(30) as (ifnull(data->>'$.brand', 'empty'));
+--now we can index the virtual column
+create index idx_json_brand on products (json_brand);
+
+delete from products where product_id = 12;
