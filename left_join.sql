@@ -57,7 +57,20 @@ where b.bill_id is not null
 group by c.name
 order by total_spent desc;
 
---wichi is the most selled product
+--which is the most selled product
+select p.name, sum(bp.quantity) as total_quantity
+from products as p
+left join bill_products as bp
+  on bp.product_id = p.product_id
+left join bills as b
+  on b.bill_id = bp.bill_id
+where bp.bill_product_id is not null
+group by p.name
+order by total_quantity desc
+limit 10;
+
+
+--which product made us earn more money
 select p.name, sum(bp.quantity) as total_quantity, sum(bp.total) as total_earned
 from products as p
 left join bill_products as bp
@@ -66,4 +79,5 @@ left join bills as b
   on b.bill_id = bp.bill_id
 where bp.bill_product_id is not null
 group by p.name
-order by total_quantity desc;
+order by total_earned desc
+limit 10;
